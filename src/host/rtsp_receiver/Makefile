@@ -1,0 +1,50 @@
+
+LIVE555_LIB_PATH = $(THIRD_PARTY_LIB_PATH)/live
+
+INCLUDES = -I$(LIVE555_LIB_PATH)/UsageEnvironment/include -I$(LIVE555_LIB_PATH)/groupsock/include -I$(LIVE555_LIB_PATH)/liveMedia/include -I$(LIVE555_LIB_PATH)/BasicUsageEnvironment/include
+##### Change the following for your environment: 
+CROSS_COMPILE?=		$(CODEGEN_PREFIX)
+COMPILE_OPTS =		$(INCLUDES) -I. -O3 -DSOCKLEN_T=socklen_t -DNO_SSTREAM=1 -D_LARGEFILE_SOURCE=1 -D_FILE_OFFSET_BITS=64
+C =			c
+C_COMPILER =		$(CROSS_COMPILE)gcc
+C_FLAGS =		$(COMPILE_OPTS)
+CPP =			cpp
+CPLUSPLUS_COMPILER =	$(CROSS_COMPILE)g++
+CPLUSPLUS_FLAGS =	$(COMPILE_OPTS) -Wall -DBSD=1
+OBJ =			o
+AR =			$(CROSS_COMPILE)ar
+LIB_SUFFIX =			a
+##### End of variables to change
+
+TARGET = libRTSPReceiver.a
+
+all: $(TARGET) 
+
+RTSP_RECEIVER_OBJS = FrameSink.o RtspReceiver.o queue.o buffer.o
+
+$(TARGET):$(RTSP_RECEIVER_OBJS) $(LOCAL_LIBS)
+	$(AR) -crs $@ *.o 
+
+.$(C).$(OBJ):
+	$(C_COMPILER) -c $(C_FLAGS) $<
+
+.$(CPP).$(OBJ):
+	$(CPLUSPLUS_COMPILER) -c $(CPLUSPLUS_FLAGS) $<
+
+
+USAGE_ENVIRONMENT_DIR = $(LIVE555_LIB_PATH)/UsageEnvironment
+USAGE_ENVIRONMENT_LIB = $(USAGE_ENVIRONMENT_DIR)/libUsageEnvironment.$(LIB_SUFFIX)
+BASIC_USAGE_ENVIRONMENT_DIR = $(LIVE555_LIB_PATH)/BasicUsageEnvironment
+BASIC_USAGE_ENVIRONMENT_LIB = $(BASIC_USAGE_ENVIRONMENT_DIR)/libBasicUsageEnvironment.$(LIB_SUFFIX)
+LIVEMEDIA_DIR = $(LIVE555_LIB_PATH)/liveMedia
+LIVEMEDIA_LIB = $(LIVEMEDIA_DIR)/libliveMedia.$(LIB_SUFFIX)
+GROUPSOCK_DIR = $(LIVE555_LIB_PATH)/groupsock
+GROUPSOCK_LIB = $(GROUPSOCK_DIR)/libgroupsock.$(LIB_SUFFIX)
+LOCAL_LIBS =	$(LIVEMEDIA_LIB) $(GROUPSOCK_LIB) \
+		$(BASIC_USAGE_ENVIRONMENT_LIB) $(USAGE_ENVIRONMENT_LIB)
+LIBS =			$(LOCAL_LIBS) $(LIBS_FOR_CONSOLE_APPLICATION)
+
+clean:
+	-rm -rf *.$(OBJ) $(TARGET)
+
+##### Any additional, platform-specific rules come here:
