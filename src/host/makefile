@@ -52,7 +52,7 @@ AUDIO_LIBS   = $(linuxdevkit_PATH)/usr/lib/libasound.so.2
 RPE_LIBS     = $(rpe_PATH)/lib/lib/a8/debug/rpe.av5T
 MCFW_LIBS    = $(MCFW_LIB_DIR)/dvr_rdk_mcfw_api.a $(MCFW_LIB_DIR)/dvr_rdk_link_api.a $(MCFW_LIB_DIR)/dvr_rdk_common_utils.a $(MCFW_LIB_DIR)/dvr_rdk_osa.a $(SYSLINK_LIBS)
 
-LIBS = $(LIB_DIR)/$(TARGET_PREFIX).a $(MCFW_LIBS) $(AUDIO_LIBS) $(RPE_LIBS)
+LIBS = $(LIB_DIR)/$(TARGET_PREFIX).a 
 
 LIBS+=rtsp_receiver/libRTSPReceiver.a -lstdc++
 LIBS+=$(THIRD_PARTY_LIB_PATH)/live/liveMedia/libliveMedia.a 
@@ -65,6 +65,8 @@ LIBS+=mpegts/libMpegTS.a
 
 # Transcode module
 LIBS+=dm8168/build/lib/dm8168_transcode.a
+
+LIBS+=$(MCFW_LIBS) $(AUDIO_LIBS) $(RPE_LIBS)
 
 OBJS = $(subst .c,.o, $(FILES) )
 
