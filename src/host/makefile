@@ -22,7 +22,8 @@ vpath %.a $(MCFW_LIB_DIR)
 CC_OPTS   = -c -Wall -Warray-bounds -Werror
 OPTI_OPTS = -O3
 AR_OPTS   = -rc
-LD_OPTS   = -lpthread -lm -lavformat -lavcodec -lavdevice -lavutil -lavfilter -lpostproc -lswresample -lswscale -lxvidcore -lyasm -L/home/ti/8168/third-party-lib/ffmpeg/build/lib
+FFMPEG_OPTS = -lavformat -lavcodec -lavdevice -lavutil -lavfilter -lpostproc -lswresample -lswscale -lxvidcore -lyasm -L$(FFMPEG_LIB_PATH)/lib
+LD_OPTS   = -lpthread -lm $(FFMPEG_OPTS)
 DEFINE    = $(DVR_RDK_CFLAGS)
 
 # All the source files.
@@ -59,7 +60,11 @@ LIBS+=$(THIRD_PARTY_LIB_PATH)/live/groupsock/libgroupsock.a
 LIBS+=$(THIRD_PARTY_LIB_PATH)/live/BasicUsageEnvironment/libBasicUsageEnvironment.a 
 LIBS+=$(THIRD_PARTY_LIB_PATH)/live/UsageEnvironment/libUsageEnvironment.a
 
+# TS input module
 LIBS+=mpegts/libMpegTS.a
+
+# Transcode module
+LIBS+=dm8168/build/lib/dm8168_transcode.a
 
 OBJS = $(subst .c,.o, $(FILES) )
 
@@ -70,12 +75,12 @@ LIB = $(TARGET_PREFIX).a
 EXE = $(EXE_DIR)/$(TARGET_PREFIX).out
 
 # Install the binary while do make.
-all: depend mpegtslib rtsp lib exe install
+all: depend mpegtslib dm8168_lib rtsp lib exe install
 
 .c.o:
 	@echo \# $(TARGET_PREFIX): $(PLATFORM): Compiling $<
 	$(CC) $(CC_OPTS) $(OPTI_OPTS) $(DEFINE) $(INCLUDE) -o$(OBJ_DIR)/$@ $<
-
+	
 lib : $(LIB_DIR)/$(LIB)
 
 $(LIB_DIR)/$(LIB) : $(OBJS)
@@ -88,6 +93,7 @@ clean:
 	rm -rf $(BUILD_DIR)
 	make -C rtsp_receiver clean
 	make -C mpegts clean
+	make -C dm8168 clean
 
 depend:
 	-mkdir -p $(OBJ_DIR)
@@ -95,11 +101,15 @@ depend:
 	-mkdir -p $(LIB_DIR)
 
 exe:
+	@echo Link####
 	@echo \# $(TARGET_PREFIX): $(PLATFORM): Linking
 	$(LD) $(LD_OPTS) -o$(EXE) $(LIBS)
 	@echo \# Final executable $(EXE) !!!
 	@echo \#
 
+dm8168_lib:
+	make -C dm8168
+	
 rtsp:
 	make -C rtsp_receiver
 	

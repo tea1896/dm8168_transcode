@@ -21,6 +21,16 @@
 #define OS_MAX_FILE_NAME_LEN         1024    // 系统支持的最大文件名长度
 #define OS_INVALID_FD                  (-1)  // 无效的文件描述符
 
+typedef unsigned char           U8;
+typedef unsigned short          U16;
+typedef unsigned int            U32;
+typedef unsigned long long      U64;
+typedef signed char             S8;
+typedef signed short            S16;
+typedef signed int              S32;
+typedef long long               S64;
+
+
 #endif
 
 
