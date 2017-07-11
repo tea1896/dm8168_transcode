@@ -38,10 +38,12 @@ CODEC_INC        = -I$(xdais_PATH)/packages -I$(h264dec_PATH)/Inc -I$(mpeg4dec_P
 LINUXDEVKIT_INC  = -I$(linuxdevkit_PATH)/usr/include
 RPE_INC          = -I$(rpe_PATH)/include -I$(rpe_PATH)/src/include -I$(aaclcdec_PATH)/packages -I$(aaclcenc_PATH)/packages -I$(xdais_PATH)/packages
 MCFW_INC         = -I$(dvr_rdk_PATH)/mcfw/interfaces -I$(dvr_rdk_PATH)/mcfw/interfaces/common_def
-COMMON_INC       = -I../inc -I../priv -I. -I$(dvr_rdk_PATH)
+FFMPEG_INC		 = -I$(FFMPEG_LIB_PATH)/include
+PROJECT_INC		 = -I$(PROJECT_DIR)/host/include 
+COMMON_INC       = -I../inc -I../priv -I. -I$(dvr_rdk_PATH) 
 
 INCLUDE += $(MCFW_INC) $(OSA_INC) $(DEVICES_INC) $(RPE_INC) $(LINUXDEVKIT_INC) $(SYSLINK_INC) \
-		   $(CODEC_INC) $(KERNEL_INC) $(COMMON_INC)
+		   $(CODEC_INC) $(KERNEL_INC) $(COMMON_INC) $(FFMPEG_INC) $(PROJECT_INC)
 INCLUDE += -I$(KERNELDIR)/usr/include -I$(KERNELDIR)/arch/arm/include/  
 
 SYSLINK_LIBS = $(syslink_PATH)/packages/ti/syslink/lib/syslink.a_release

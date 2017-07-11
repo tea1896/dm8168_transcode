@@ -10,6 +10,15 @@ export INSTALL_PATH
 THIRD_PARTY_LIB_PATH = /home/ti/8168/third-party-lib
 export THIRD_PARTY_LIB_PATH
 
+# ffmpeg
+FFMPEG_LIB_PATH = $(THIRD_PARTY_LIB_PATH)/ffmpeg/build
+export  FFMPEG_LIB_PATH
+
+# Project path
+PROJECT_DIR = $(shell pwd)
+export PROJECT_DIR
+
+
 include Rules.make
 
 all:

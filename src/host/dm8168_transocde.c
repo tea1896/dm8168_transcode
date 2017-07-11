@@ -122,7 +122,7 @@ int dm8168_transcode(int argc, char **argv) {
    
     /* wait ctrl + c */
     while (! g_quit) { usleep(100); }
-    printf("### Exit transcode!\n");
+        printf("### Exit transcode!\n");
 
     /* stop components */
     Logo_deInit();

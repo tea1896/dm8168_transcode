@@ -1,12 +1,13 @@
 
-FFMPEG_LIB_PATH = $(THIRD_PARTY_LIB_PATH)/ffmpeg/build
 
 INCLUDES = -I$(FFMPEG_LIB_PATH)/include  \
-           -I$(FFMPEG_LIB_PATH)/include/libavformat 
+           -I$(FFMPEG_LIB_PATH)/include/libavformat \
+		   -I$(PROJECT_DIR)/host/include
 		   
+		 
 ##### Change the following for your environment: 
 CROSS_COMPILE?=		$(CODEGEN_PREFIX)
-COMPILE_OPTS =		$(INCLUDES) -I. -O3 -DSOCKLEN_T=socklen_t -DNO_SSTREAM=1 -D_LARGEFILE_SOURCE=1 -D_FILE_OFFSET_BITS=64 -lavformat -lavcodec -lavdevicde -lavutil -lpostproc -lswresamole -lswscale -lavfilter -L/home/ti/8168/third-party-lib/ffmpeg/build/lib
+COMPILE_OPTS =		$(INCLUDES) -I. -O3 -DSOCKLEN_T=socklen_t -DNO_SSTREAM=1 -D_LARGEFILE_SOURCE=1 -D_FILE_OFFSET_BITS=64 -lavformat -lavcodec -lavdevicde -lavutil -lpostproc -lswresamole -lswscale -lavfilter -L$(FFMPEG_LIB_PATH)/lib
 C =			c
 C_COMPILER =		$(CROSS_COMPILE)gcc
 C_FLAGS =		$(COMPILE_OPTS)
