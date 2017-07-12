@@ -3,7 +3,7 @@ DVR_RDK_ROOT_PATH = /home/ti/8168/sdk/tl-mcfw-rdk-1.3
 export DVR_RDK_ROOT_PATH
 
 # Install the target files
-INSTALL_PATH = /home/ti/8168/rfs_816x/816x-dvr-rdk-nfs-1.0/opt/dvr_rdk/ti816x
+INSTALL_PATH = /home/ti/8168/rfs_816x/816x-dvr-rdk-nfs-1.0/opt/dvr_rdk/ti816x/bin/multich_transcode
 export INSTALL_PATH
 
 # live555
@@ -18,13 +18,15 @@ export  FFMPEG_LIB_PATH
 PROJECT_DIR = $(shell pwd)
 export PROJECT_DIR
 
+#Porject include
+PROJECT_INC		 = -I$(PROJECT_DIR)/host/include  \
+                   -I$(PROJECT_DIR)/host/common/Log
+export PROJECT_INC
 
 include Rules.make
 
 all:
 	make -C host all
-	#make -C dsp all
 
 clean:
 	make -C host clean
-	#make -C dsp clean

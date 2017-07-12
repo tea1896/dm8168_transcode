@@ -2,7 +2,8 @@
 
 INCLUDES = -I$(FFMPEG_LIB_PATH)/include  \
            -I$(FFMPEG_LIB_PATH)/include/libavformat \
-		   -I$(PROJECT_DIR)/host/include
+		   -I$(PROJECT_DIR)/host/include 
+INCLUDES += $(PROJECT_INC)
 		   
 		 
 ##### Change the following for your environment: 

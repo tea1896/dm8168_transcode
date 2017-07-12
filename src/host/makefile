@@ -3,7 +3,7 @@
 TARGET_PREFIX = dm8168_transcode
 
 # Install the target binary.
-INSTALL_DIR=$(INSTALL_PATH)/bin
+INSTALL_DIR=$(INSTALL_PATH)
 
 CC = $(CODEGEN_PREFIX)gcc
 AR = $(CODEGEN_PREFIX)ar
@@ -40,7 +40,6 @@ LINUXDEVKIT_INC  = -I$(linuxdevkit_PATH)/usr/include
 RPE_INC          = -I$(rpe_PATH)/include -I$(rpe_PATH)/src/include -I$(aaclcdec_PATH)/packages -I$(aaclcenc_PATH)/packages -I$(xdais_PATH)/packages
 MCFW_INC         = -I$(dvr_rdk_PATH)/mcfw/interfaces -I$(dvr_rdk_PATH)/mcfw/interfaces/common_def
 FFMPEG_INC		 = -I$(FFMPEG_LIB_PATH)/include
-PROJECT_INC		 = -I$(PROJECT_DIR)/host/include 
 COMMON_INC       = -I../inc -I../priv -I. -I$(dvr_rdk_PATH) 
 
 INCLUDE += $(MCFW_INC) $(OSA_INC) $(DEVICES_INC) $(RPE_INC) $(LINUXDEVKIT_INC) $(SYSLINK_INC) \
@@ -52,8 +51,10 @@ AUDIO_LIBS   = $(linuxdevkit_PATH)/usr/lib/libasound.so.2
 RPE_LIBS     = $(rpe_PATH)/lib/lib/a8/debug/rpe.av5T
 MCFW_LIBS    = $(MCFW_LIB_DIR)/dvr_rdk_mcfw_api.a $(MCFW_LIB_DIR)/dvr_rdk_link_api.a $(MCFW_LIB_DIR)/dvr_rdk_common_utils.a $(MCFW_LIB_DIR)/dvr_rdk_osa.a $(SYSLINK_LIBS)
 
+# main function
 LIBS = $(LIB_DIR)/$(TARGET_PREFIX).a 
 
+# rtsp module
 LIBS+=rtsp_receiver/libRTSPReceiver.a -lstdc++
 LIBS+=$(THIRD_PARTY_LIB_PATH)/live/liveMedia/libliveMedia.a 
 LIBS+=$(THIRD_PARTY_LIB_PATH)/live/groupsock/libgroupsock.a 
@@ -66,6 +67,9 @@ LIBS+=mpegts/libMpegTS.a
 # Transcode module
 LIBS+=dm8168/build/lib/dm8168_transcode.a
 
+# comm
+LIBS+=common/build/lib/wv_common.a
+
 LIBS+=$(MCFW_LIBS) $(AUDIO_LIBS) $(RPE_LIBS)
 
 OBJS = $(subst .c,.o, $(FILES) )
@@ -77,7 +81,7 @@ LIB = $(TARGET_PREFIX).a
 EXE = $(EXE_DIR)/$(TARGET_PREFIX).out
 
 # Install the binary while do make.
-all: depend mpegtslib dm8168_lib rtsp lib exe install
+all: depend mpegtslib dm8168_lib rtsp lib common_lib exe install
 
 .c.o:
 	@echo \# $(TARGET_PREFIX): $(PLATFORM): Compiling $<
@@ -96,6 +100,7 @@ clean:
 	make -C rtsp_receiver clean
 	make -C mpegts clean
 	make -C dm8168 clean
+	make -C common clean
 
 depend:
 	-mkdir -p $(OBJ_DIR)
@@ -117,6 +122,9 @@ rtsp:
 	
 mpegtslib:
 	make -C mpegts
+	
+common_lib:
+	make -C common
 
 install:
 	cp $(EXE) $(INSTALL_DIR)

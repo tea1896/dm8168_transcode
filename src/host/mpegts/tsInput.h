@@ -18,8 +18,11 @@
 #include "libavfilter/buffersink.h"
 #include "libavfilter/buffersrc.h"
 
-#define INPUT_TS_MAX_PROGRAM_NUM        128
+#define INPUT_TS_MAX_PROGRAM_NUM        2
 #define INPUT_TS_MAX_FRAME_BUFFER_NUM   60
+#define MAX_STREAM_NUM                  30      
+#define MAX_PROGTRAM_NAME_LEN           50      
+
 
 /* 输入的一帧音视频数据 */
 typedef struct {
@@ -28,9 +31,11 @@ typedef struct {
 } INPUT_TS_FRAME_S;
 
 /* 一个输入流缓存 */
-typedef struct {    
-    /* 输入的视频上下文 */
-    AVFormatContext *   ifmt_ctx;
+typedef struct {   
+    u_int32_t                   u32StreamId;    // PID
+    u_int32_t                   u32StreamIndex; // Stream index
+    enum AVMediaType            eStreamType;    // Stream 
+
 
     /* 缓存的帧数 */
     u_int32_t           numFrames;
@@ -45,8 +50,11 @@ typedef struct {
 
 /* 一个输入节目缓存 */
 typedef struct {
-    INPUT_STREAM_FRAME_LIST_S  videoStreamBuffer;
-    INPUT_STREAM_FRAME_LIST_S  audioStreamBuffer[MAX_SUPPORT_AUDIO_NUM_PROGRAM];       
+    u_int32_t                         u32ProgramId;
+    u_int8_t                          u8ServiceName[MAX_PROGTRAM_NAME_LEN];         // Program name
+    u_int8_t                          u8ServiceProder[MAX_PROGTRAM_NAME_LEN];       // Provider name 
+    u_int32_t                         u32StreamNum;                                 // Stream count
+    INPUT_STREAM_FRAME_LIST_S         stStreams[MAX_SUPPORT_STREAM_NUM_PROGRAM];       
 } INPUT_TS_PROGRAM_LIST_S;
 
 
@@ -59,6 +67,9 @@ typedef struct
     /* 输入通道的URL地址 */
     int8_t              inputURL[OS_MAX_LINE_LEN]; 
 
+    /* 输入的视频上下文 */
+    AVFormatContext *   ifmt_ctx;
+
     /* 是否读取数据 */
     int8_t              inputReadFlag; 
 
@@ -66,7 +77,7 @@ typedef struct
     u_int32_t           programNum;
     
     /* 节目buffer */
-   	INPUT_TS_PROGRAM_LIST_S programBuffer[INPUT_TS_MAX_PROGRAM_NUM];
+   	INPUT_TS_PROGRAM_LIST_S programInfo[INPUT_TS_MAX_PROGRAM_NUM];
 }TSIP_INPUT_CHANNEL_S;
 
 /* TS流输入 */
@@ -78,7 +89,7 @@ typedef struct
 
 TSIP_INPUT_S *  tsInput_GetHandler(void);
 int32_t         tsInput_Init(void);
-int32_t         tsInput_StartChannel(const int32_t inpuChannelNum);
+int32_t         tsInput_StartChannel(const int32_t inpuChannelNum, const int8_t * url);
 int32_t         tsInput_StopChannel(const int32_t inpuChannelNum);
 int32_t         tsInput_WriteChannelVideoPkt(const int32_t inpuChannelNum, AVPacket *  pstPkt);
 int32_t         tsInput_ReadChannelVideoPkt(const int32_t inpuChannelNum, AVPacket *  pstPkt);
