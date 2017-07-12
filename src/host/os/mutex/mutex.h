@@ -18,6 +18,7 @@
 #ifndef _INCLUDE_MUTEX
 #define _INCLUDE_MUTEX
 
+#define MUTEX_SUCCESS   (0)
 #define MUTEX_ERR       (-1)
 
 #include "appGlobal.h"

@@ -4,7 +4,7 @@
 
 #include "list.h"
 #include "mem/mem.h"
-#include "log/log.h"
+#include "wv_log.h"
 
 
 /*

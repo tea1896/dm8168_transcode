@@ -18,9 +18,14 @@ export  FFMPEG_LIB_PATH
 PROJECT_DIR = $(shell pwd)
 export PROJECT_DIR
 
-#Porject include
-PROJECT_INC		 = -I$(PROJECT_DIR)/host/include  \
-                   -I$(PROJECT_DIR)/host/common/Log
+# Host(arm) include
+HOST_PATH = $(PROJECT_DIR)/host
+export HOST_PATH
+				   
+APPINCH=$(shell find $(HOST_PATH) -name "*.h*")
+TMPDIR=$(dir $(APPINCH))
+APPINCDIR=$(sort $(TMPDIR))
+PROJECT_INC += $(foreach temp, $(APPINCDIR), -I$(temp))				   
 export PROJECT_INC
 
 include Rules.make

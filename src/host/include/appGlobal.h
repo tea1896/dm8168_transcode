@@ -23,6 +23,22 @@ typedef signed short            S16;
 typedef signed int              S32;
 typedef long long               S64;
 
+typedef unsigned char volatile          VU8;
+typedef unsigned short volatile         VU16;
+typedef unsigned int volatile           VU32;
+typedef unsigned long volatile          VU64;
+
+typedef unsigned char                   BYTE;
+typedef short                           SHORT;
+typedef unsigned short                  WORD;
+typedef int                             LONG;
+typedef unsigned int                    DWORD;
+typedef char                            BOOL;
+
+#define FALSE                           0
+#define TRUE                            1
+
+
 
 #define MAX_SUPPORT_TRANS_NUM           12  // 能够支持的最大转码路数
 #define MAX_SUPPORT_TRANS_SD_NUM        12  // 能够支持的最大标清路数 - 不建议使用

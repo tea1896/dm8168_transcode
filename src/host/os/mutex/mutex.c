@@ -19,7 +19,7 @@
 #include <pthread.h>
 
 #include "mutex.h"
-#include "log/log.h"
+#include "wv_log.h"
 
 static pthread_mutex_t s_mutex;
 
@@ -36,7 +36,7 @@ S32 Mutex_Init(void)
 		return MUTEX_ERR;
 	}
 
-	return SUCCESS;
+	return MUTEX_SUCCESS;
 }
 
 
@@ -53,7 +53,7 @@ S32  Mutex_Lock(void)
 		return MUTEX_ERR;
 	}
 
-	return SUCCESS;
+	return MUTEX_SUCCESS;
 }
 
 
@@ -70,7 +70,7 @@ S32  Mutex_Unlock(void)
 		return MUTEX_ERR;
 	}
 
-	return SUCCESS;
+	return MUTEX_SUCCESS;
 }
 
 
@@ -87,5 +87,6 @@ S32 Mutex_Destroy(void)
 		return MUTEX_ERR;
 	}
 
-	return SUCCESS;
+	return MUTEX_SUCCESS;
 }
+

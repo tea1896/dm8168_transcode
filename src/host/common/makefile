@@ -1,8 +1,5 @@
-PROJECT_DIR = /home/ti/8168/samba/dm8168_transcode/src
-PROJECT_INC	= -I$(PROJECT_DIR)/host/include
-
 TARGET = wv_common.a
-CUR_DIR = /home/ti/8168/samba/dm8168_transcode/src/host/common
+CUR_DIR = $(HOST_PATH)/common
 
 BUILD_DIR = build
 OBJ_DIR   = $(CUR_DIR)/$(BUILD_DIR)/obj
@@ -21,13 +18,12 @@ LIBS= -lpthread -lrt -lm
 INCLUDE= -I.
 
 # APPDIR= $(PWD)
-APPDIR = /home/ti/8168/samba/dm8168_transcode/src/host/common
-APPINCH=$(shell find $(APPDIR) -name "*.h*")
+APPINCH=$(shell find $(CUR_DIR) -name "*.h*")
 TMPDIR=$(dir $(APPINCH))
 APPINCDIR=$(sort $(TMPDIR))
 INCLUDE += $(foreach temp, $(APPINCDIR), -I$(temp))
 INCLUDE += $(PROJECT_INC)
-SRC=$(shell find $(APPDIR) -name '*.c')
+SRC=$(shell find $(CUR_DIR) -name '*.c')
 APP=$(SRC:%.c=%.o)
 
 all:  depend  $(TARGET) 

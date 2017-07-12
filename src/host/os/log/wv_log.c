@@ -9,9 +9,7 @@
 #include <stdbool.h>
 #include <sys/syslog.h>
 
-#include "log.h"
-
-#include "common.h"
+#include "wv_log.h"
 
 static struct LogCtrl_ST s_stLogCtrl;
 static bool s_isSyslogOpen = false;
@@ -29,27 +27,13 @@ S8 s8arrLevelName[][LOG_LEVEL_NAME_MAX_LEN] =
 S8 s8arrModuleName[][LOG_MODULE_NAME_MAX_LEN] =
 {
 	"INIT",
+    "SYS",
 	"COMM",
-	"PCM",
-	"ENCODER",
+	"TSIN",
+	"TRANS",
 	"MUXER",
+	"TSOUT",
 	"SOCKET",
-	"UPDATA",
-	"FPGA",
-	"SYS",
-	"GPIO",
-	"ADV7611",
-	"I2C",
-    "UART",
-    "M22",
-	"TEMP",
-    "PARAMS",
-	"DS2432",
-    "SPI",
-	"WEB",
-	"USER",
-	"TSP",
-	"SIP"
 };
 
 
@@ -168,10 +152,10 @@ static S32 Log_IsOpenLevel(LogLevel_EM emLogLevel)
 {
 	if(!(s_stLogCtrl.emLogLevel & emLogLevel))
 	{
-		return LOG_ERR;
+		return WV_LOG_ERR;
 	}
 
-	return SUCCESS;
+	return WV_LOG_SUCCESS;
 }
 
 
@@ -179,23 +163,11 @@ static S32 Log_IsOpenModule(LogModule_EM emLogModule)
 {
 	if(!(s_stLogCtrl.emLogModule & emLogModule))
 	{
-		return LOG_ERR;
+		return WV_LOG_ERR;
 	}
 
-	return SUCCESS;
+	return WV_LOG_SUCCESS;
 }
-
-#if 0
-static S32 Log_IsOpenOutputMode(LogOutput_EM emLogOutput)
-{
-	if(!(s_stLogCtrl.emLogOutput & emLogOutput))
-	{
-		return LOG_ERR;
-	}
-
-	return SUCCESS;
-}
-#endif
 
 
 static S8 *Log_GetLevelString(LogLevel_EM emLogLevel)
@@ -272,7 +244,7 @@ static S32 Log_GetDirPath(S8 *dirpath, S8 *filepath)
 	if((NULL == dirpath) || (NULL == filepath))
 	{
 		LOG_PRINTF(LOG_LEVEL_ERROR, LOG_MODULE_INIT, "Params is NULL!");
-		return LOG_ERR;
+		return WV_LOG_ERR;
 	}
 
 	S8 * ptr = NULL;
@@ -284,10 +256,10 @@ static S32 Log_GetDirPath(S8 *dirpath, S8 *filepath)
 	else
 	{
 		LOG_PRINTF(LOG_LEVEL_ERROR, LOG_MODULE_INIT, "filepath isn't absolute path");
-		return LOG_ERR;
+		return WV_LOG_ERR;
 	}
 
-	return SUCCESS;
+	return WV_LOG_SUCCESS;
 }
 
 
@@ -310,13 +282,13 @@ S32 Log_Init(char *ps8LogSavePath, U32 u32LogSize)
 	if((NULL == ps8LogSavePath))
 	{
 		LOG_PRINTF(LOG_LEVEL_ERROR, LOG_MODULE_SYS, "Params is NULL");
-		return LOG_ERR;
+		return WV_LOG_ERR;
 	}
 
 	if(0 == u32LogSize)
 	{
 		LOG_PRINTF(LOG_LEVEL_ERROR, LOG_MODULE_SYS, "Log Size is zero");
-		return LOG_ERR;
+		return WV_LOG_ERR;
 	}
 
 	S8 s8Command[MAX_COMMAND_LEN] = {0};
@@ -337,7 +309,7 @@ S32 Log_Init(char *ps8LogSavePath, U32 u32LogSize)
 		snprintf((char *)s8Command, sizeof(s8Command), "syslogd -O %s -s %u", (char *)ps8LogSavePath, u32LogSize);
 		system((char *)s8Command);
 
-		openlog(PROCESS_NAME, LOG_PID, LOG_USER);
+		openlog(WV_LOG_IDENT_NAME, LOG_PID, LOG_USER);
 
 		s_isSyslogOpen = true;
 	}
@@ -349,7 +321,7 @@ S32 Log_Init(char *ps8LogSavePath, U32 u32LogSize)
 
 	s_isLogInit = true;
 
-	return SUCCESS;
+	return WV_LOG_SUCCESS;
 }
 
 
@@ -357,7 +329,7 @@ static S32 Log_SendMainborad(LogLevel_EM emLogLevel, U8 *pu8PrintBuff)
 {
 
 
-	return SUCCESS;
+	return WV_LOG_SUCCESS;
 }
 
 /* 
@@ -397,7 +369,7 @@ void Log_Printf(LogLevel_EM emLogLevel, LogModule_EM emLogModule, const char *fo
 	}
 
 	//check whether the log level and log module are open
-	if(!((SUCCESS == Log_IsOpenLevel(emLogLevel)) && (SUCCESS == Log_IsOpenModule(emLogModule))))
+	if(!((WV_LOG_SUCCESS == Log_IsOpenLevel(emLogLevel)) && (WV_LOG_SUCCESS == Log_IsOpenModule(emLogModule))))
 	{
 		return ;
 	}
@@ -465,44 +437,8 @@ void Log_Clear(S8 *ps8LogSavePath, U32 u32LogSize)
 	//restart syslogd
 	snprintf((char *)s8Command, sizeof(s8Command), "syslogd -O %s -s %u", (char *)ps8LogSavePath, u32LogSize);
 	system((char *)s8Command);
-
 }
 
-
-#if TEST_LOG
-int main(int argc, char **argv)
-{
-	Log_Init("/home/root/log.txt", 1024);
-
-	LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_PCM,"pcm..");
-	LOG_PRINTF(LOG_LEVEL_INFO, LOG_MODULE_SYS,"sys..");
-	LOG_PRINTF(LOG_LEVEL_NOTICE, LOG_MODULE_COMM,"comm..");
-	LOG_PRINTF(LOG_LEVEL_WARNING, LOG_MODULE_FPGA, "fpga..");
-	LOG_PRINTF(LOG_LEVEL_ERROR, LOG_MODULE_MUXER,"muxer..");
-	LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TABLE,"table..");
-	LOG_PRINTF(LOG_LEVEL_INFO, LOG_MODULE_UPDATA, "module..");
-	LOG_PRINTF(LOG_LEVEL_NOTICE, LOG_MODULE_ENCODER, "encoder..");
-
-	printf("\n\n");
-	Log_SetLevel(LOG_LEVEL_DEBUG, emLogCloseMode);
-	LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TABLE,"table..");
-	Log_SetLevel(LOG_LEVEL_DEBUG, emLogOpenMode);
-	LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TABLE,"table..");
-
-
-	printf("\n\n");
-	Log_SetModule(LOG_MODULE_PCM, emLogCloseMode);
-	LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_PCM,"pcm..");
-	Log_SetModule(LOG_MODULE_PCM, emLogOpenMode);
-	LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_PCM,"pcm..");
-
-	sleep(20);
-
-	Log_Clear("/home/root/log.txt",1024);
-
-	return 0;
-}
-#endif
 
 
 

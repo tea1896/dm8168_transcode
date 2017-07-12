@@ -19,8 +19,7 @@
 #include "appGlobal.h"
 #include "IPconfig.h"
 #include "xil_io.h"
-#include "FPGA/fpga.h"
-#include "log/log.h"
+#include "wv_log.h"
 
 void *s_pGEM1LogicAddress;
 void *s_pGEM2LogicAddress;

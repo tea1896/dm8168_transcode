@@ -2,7 +2,7 @@
 #include <sys/eventfd.h>
 
 #include "event.h"
-#include "log/log.h"
+#include "wv_log.h"
 
 
 S32 Event_CreateFd(void)

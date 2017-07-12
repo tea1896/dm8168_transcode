@@ -67,8 +67,11 @@ LIBS+=mpegts/libMpegTS.a
 # Transcode module
 LIBS+=dm8168/build/lib/dm8168_transcode.a
 
-# comm
+# common
 LIBS+=common/build/lib/wv_common.a
+
+# os
+LIBS+=os/build/lib/wv_os.a
 
 LIBS+=$(MCFW_LIBS) $(AUDIO_LIBS) $(RPE_LIBS)
 
@@ -81,7 +84,7 @@ LIB = $(TARGET_PREFIX).a
 EXE = $(EXE_DIR)/$(TARGET_PREFIX).out
 
 # Install the binary while do make.
-all: depend mpegtslib dm8168_lib rtsp lib common_lib exe install
+all: depend mpegtslib dm8168_lib rtsp lib common_lib os_lib exe install
 
 .c.o:
 	@echo \# $(TARGET_PREFIX): $(PLATFORM): Compiling $<
@@ -101,6 +104,7 @@ clean:
 	make -C mpegts clean
 	make -C dm8168 clean
 	make -C common clean
+	make -C os clean
 
 depend:
 	-mkdir -p $(OBJ_DIR)
@@ -116,6 +120,9 @@ exe:
 
 dm8168_lib:
 	make -C dm8168
+	
+os_lib:
+	make -C os
 	
 rtsp:
 	make -C rtsp_receiver

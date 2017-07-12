@@ -1,39 +1,40 @@
-TARGET = wv_common.a
-
-# ARCH= armv5l-Linux-
-CC= $(ARCH)gcc
-LD = $(ARCH)ld
-AS = $(ARCH)as
-CPP = $(ARCH)g++
-AR = $(ARCH)ar
-CFLAGS= -g -O2 -D_GNU_SOURCE -DHAVE_CONFIG_H -I
+TARGET = wv_os.a
+CUR_DIR = $(HOST_PATH)/os
 
 BUILD_DIR = build
-OBJ_DIR   = $(BUILD_DIR)/obj
-EXE_DIR   = $(BUILD_DIR)/bin
-LIB_DIR   = $(BUILD_DIR)/lib
+OBJ_DIR   = $(CUR_DIR)/$(BUILD_DIR)/obj
+EXE_DIR   = $(CUR_DIR)/$(BUILD_DIR)/bin
+LIB_DIR   = $(CUR_DIR)/$(BUILD_DIR)/lib
+
+#ARCH= armv5l-Linux-
+CC= $(CODEGEN_PREFIX)gcc
+LD = $(CODEGEN_PREFIX)ld
+AS = $(CODEGEN_PREFIX)as
+CPP = $(CODEGEN_PREFIX)g++
+AR = $(CODEGEN_PREFIX)ar
+CFLAGS= -g -O2 -D_GNU_SOURCE -DHAVE_CONFIG_H
 
 LIBS= -lpthread -lrt -lm
-INCLUDE= -I.  -I/home/ti/8168/samba/dm8168_transcode/src/host/include  -I/home/ti/8168/samba/dm8168_transcode/src/host/comm/Log
+INCLUDE= -I.
 
-APPDIR= $(PWD)
-APPINCH=$(shell find $(APPDIR) -name "*.h*")
+# APPDIR= $(PWD)
+APPINCH=$(shell find $(CUR_DIR) -name "*.h*")
 TMPDIR=$(dir $(APPINCH))
 APPINCDIR=$(sort $(TMPDIR))
 INCLUDE += $(foreach temp, $(APPINCDIR), -I$(temp))
-SRC=$(shell find $(APPDIR) -name '*.c')
+INCLUDE += $(PROJECT_INC)
+SRC=$(shell find $(CUR_DIR) -name '*.c')
 APP=$(SRC:%.c=%.o)
 
-all: depend   $(TARGET) 
+all:  depend  $(TARGET) 
 
 $(APP): %.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
-	mv $@ $(OBJ_DIR)
+	mv  $@ $(OBJ_DIR)
 
-$(TARGET) : clean $(APP)
-	$(ARCH)ar -crs $@ $(OBJ_DIR)/*.o 
-	# $(CC) -o$@ $(LIBS) $(INCLUDE) $(APP)
-	
+$(TARGET): $(APP)
+	$(ARCH)ar -crs $(LIB_DIR)/$@  $(OBJ_DIR)/*.o
+		
 depend:
 	-mkdir -p $(OBJ_DIR)
 	-mkdir -p $(EXE_DIR)
@@ -41,6 +42,7 @@ depend:
 
 clean:
 	-rm -rf $(APP)
-	-rm -f main
+	-rm -f $(TARGET)
+	rm -rf $(BUILD_DIR)
 
 .PHONY: clean

@@ -1,5 +1,5 @@
-#ifndef _INCLUDE_LOG
-#define _INCLUDE_LOG
+#ifndef _INCLUDE_WV_LOG
+#define _INCLUDE_WV_LOG
 
 #include "appGlobal.h"
 
@@ -17,6 +17,13 @@
 #define LOG_LINE_MAX_LEN		 (256)
 #define LOG_LEVEL_NAME_MAX_LEN   (50)
 #define LOG_MODULE_NAME_MAX_LEN  (50)
+
+
+#define WV_LOG_SUCCESS            (0)
+#define WV_LOG_ERR                (-1)
+
+
+#define WV_LOG_IDENT_NAME  	      ("dm8168")
 
 
 typedef enum
@@ -42,27 +49,13 @@ typedef enum
 {
 	LOG_MODULE_ALL       =      (0xFFFFFFFF),
 	LOG_MODULE_INIT      =      (0x1 << 0),
-	LOG_MODULE_COMM      =      (0x1 << 1),
-	LOG_MODULE_PCM       =      (0x1 << 2),
-	LOG_MODULE_ENCODER   =      (0x1 << 3),
-	LOG_MODULE_MUXER     =      (0x1 << 4),
-	LOG_MODULE_SOCKET    =      (0x1 << 5),
-	LOG_MODULE_UPDATA    =      (0x1 << 6),
-	LOG_MODULE_FPGA      =      (0x1 << 7),
-	LOG_MODULE_SYS       =      (0x1 << 8),
-	LOG_MODULE_GPIO      =      (0x1 << 9),
-	LOG_MODULE_ADV7611   =      (0x1 << 10),
-	LOG_MODULE_I2C       =      (0x1 << 11),
-    LOG_MODULE_UART      =      (0x1 << 12),
-    LOG_MODULE_M22       =      (0x1 << 13),
-	LOG_MODULE_TEMP      =      (0x1 << 14),
-    LOG_MODULE_PARAMS    =      (0x1 << 15),
-	LOG_MODULE_DS2432    =      (0x1 << 16),
-    LOG_MODULE_SPI       =      (0x1 << 17),
-	LOG_MODULE_WEB       =      (0x1 << 18),
-	LOG_MODULE_USER      =      (0x1 << 19),
-	LOG_MODULE_TSP       =      (0x1 << 20),
-	LOG_MODULE_SIP       =      (0x1 << 21)
+	LOG_MODULE_SYS       =      (0x1 << 1),
+	LOG_MODULE_COMM      =      (0x1 << 2),
+	LOG_MODULE_TSIN      =      (0x1 << 3),
+	LOG_MODULE_TRANS     =      (0x1 << 4),
+	LOG_MODULE_MUXER     =      (0x1 << 5),
+	LOG_MODULE_TSOUT     =      (0x1 << 6),
+	LOG_MODULE_SOCKET    =      (0x1 << 7),
 }LogModule_EM;
 
 
@@ -95,3 +88,5 @@ void Log_Clear(S8 *ps8LogSavePath, U32 u32LogSize);
 #define LOG_PRINTF(emLogLevel, emLogModule, format, ...) Log_Printf(emLogLevel, emLogModule, "[%s:%d] " format "\r\n", __func__, __LINE__,##__VA_ARGS__)
 
 #endif
+
+

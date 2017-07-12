@@ -16,7 +16,7 @@
 #include <string.h>
 
 #include "socket_server.h"
-#include "log/log.h"
+#include "wv_log.h"
 
 volatile int socketSfd  = -1;
 

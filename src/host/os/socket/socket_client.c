@@ -19,8 +19,8 @@
 
 #include "socket_client.h"
 #include "socket_server.h"
-#include "log/log.h"
-#include "err/wv_err.h"
+#include "wv_log.h"
+#include "wv_err.h"
 
 /*****************************************************************************
   Function:     socketC_open
