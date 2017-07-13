@@ -25,7 +25,7 @@ S32 Event_Read(S32 fd)
 		ret = EVENT_ERR;
 	}
 
-	return ret;
+	return EVENT_SUCCESS;
 }
 
 
@@ -43,7 +43,7 @@ S32 Event_Write(S32 fd)
 		ret = EVENT_ERR;
 	}
 
-	return ret;
+	return EVENT_SUCCESS;
 
 }
 

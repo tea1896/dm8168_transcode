@@ -21,82 +21,117 @@
 #define INPUT_TS_MAX_PROGRAM_NUM        2
 #define INPUT_TS_MAX_FRAME_BUFFER_NUM   60
 #define MAX_STREAM_NUM                  30      
-#define MAX_PROGTRAM_NAME_LEN           50      
+#define MAX_PROGTRAM_NAME_LEN           50  
+
+#define MAX_AUDIO_NUM_PER_PROGRAM        4
+#define MAX_SUPPORT_STREAM_PER_PROGRAM   (MAX_AUDIO_NUM_PER_PROGRAM + 1)   // 每个节目能支持的流数量
+
+#define __aligned(x) __attribute__((aligned(x)))
 
 
 /* 输入的一帧音视频数据 */
+#pragma pack (4)
 typedef struct {
     /* 一帧数据 */
     AVPacket *  pktData;
-} INPUT_TS_FRAME_S;
+} __aligned(4) INPUT_TS_FRAME_S;
 
 /* 一个输入流缓存 */
+#pragma pack (4)
 typedef struct {   
-    u_int32_t                   u32StreamId;    // PID
-    u_int32_t                   u32StreamIndex; // Stream index
-    enum AVMediaType            eStreamType;    // Stream 
+    /* PID */
+    U32                         u32StreamId; 
+
+    /* program index */
+    U32                         u32ProgramIndex;
+
+    /* Stream index */
+    U32                         u32StreamIndex;  
+
+    /* stream type */
+    enum AVMediaType            eStreamType; 
+
+    /* buffer lock */
+    pthread_mutex_t             bufferLock;
 
 
     /* 缓存的帧数 */
-    u_int32_t           numFrames;
+    U32                         numFrames;
    
     /* 缓存队列 */
-    INPUT_TS_FRAME_S    frameBuf[INPUT_TS_MAX_FRAME_BUFFER_NUM];
+    INPUT_TS_FRAME_S            frameBuf[INPUT_TS_MAX_FRAME_BUFFER_NUM];
     
     /* 输入数据通知事件 */
-    int32_t             inputEventFd; 
-} INPUT_STREAM_FRAME_LIST_S;
+    S32                         inputEventFd; 
+} __aligned(4) INPUT_STREAM_FRAME_LIST_S;
 
 
 /* 一个输入节目缓存 */
+#pragma pack (4)
 typedef struct {
-    u_int32_t                         u32ProgramId;
-    u_int8_t                          u8ServiceName[MAX_PROGTRAM_NAME_LEN];         // Program name
-    u_int8_t                          u8ServiceProder[MAX_PROGTRAM_NAME_LEN];       // Provider name 
-    u_int32_t                         u32StreamNum;                                 // Stream count
-    INPUT_STREAM_FRAME_LIST_S         stStreams[MAX_SUPPORT_STREAM_NUM_PROGRAM];       
-} INPUT_TS_PROGRAM_LIST_S;
+    U32                                 u32ProgramId;                                   
+    U8                                  u8ServiceName[MAX_PROGTRAM_NAME_LEN];         // Program name
+    U8                                  u8ServiceProder[MAX_PROGTRAM_NAME_LEN];       // Provider name 
+    U32                                 u32StreamNum;                                 // Stream count
+    U32                                 u32AudioStreamNum;  
+
+    U32                                 u32VideoInputIndex;
+    U32                                 u32VideoBufferIndex;
+    U32                                 u32AudioInputIndex[MAX_AUDIO_NUM_PER_PROGRAM];
+    U32                                 u32AudioBufferIndex[MAX_AUDIO_NUM_PER_PROGRAM];
+    
+    INPUT_STREAM_FRAME_LIST_S           stStreams[MAX_SUPPORT_STREAM_PER_PROGRAM];       
+} __aligned(4) INPUT_TS_PROGRAM_LIST_S;
 
 
 /* 一个输入通道  */
+#pragma pack (4)
 typedef struct
 {
     /* 输入通道ID */
-    u_int32_t           channelId;   
+    U32                     channelId;   
     
     /* 输入通道的URL地址 */
-    int8_t              inputURL[OS_MAX_LINE_LEN]; 
+    S8                      inputURL[OS_MAX_LINE_LEN]; 
 
     /* 输入的视频上下文 */
-    AVFormatContext *   ifmt_ctx;
+    AVFormatContext *       ifmt_ctx;
 
     /* 是否读取数据 */
-    int8_t              inputReadFlag; 
+    S8                      inputReadFlag; 
+
+    /* 是否退出 */
+    S8                      exitFlag;
 
     /* 节目个数 */
-    u_int32_t           programNum;
+    U32                     programNum;
+
+    /* 是否保存到文件 */
+    U32                     localSave;
     
     /* 节目buffer */
    	INPUT_TS_PROGRAM_LIST_S programInfo[INPUT_TS_MAX_PROGRAM_NUM];
-}TSIP_INPUT_CHANNEL_S;
+}__aligned(4) TSIP_INPUT_CHANNEL_S;
 
 /* TS流输入 */
+#pragma pack (4)
 typedef struct
 {
     TSIP_INPUT_CHANNEL_S  inputChannel[MAX_SUPPORT_TRANS_NUM];
-}TSIP_INPUT_S;
+}__aligned(4) TSIP_INPUT_S;
 
 
 TSIP_INPUT_S *  tsInput_GetHandler(void);
-int32_t         tsInput_Init(void);
-int32_t         tsInput_StartChannel(const int32_t inpuChannelNum, const int8_t * url);
-int32_t         tsInput_StopChannel(const int32_t inpuChannelNum);
-int32_t         tsInput_WriteChannelVideoPkt(const int32_t inpuChannelNum, AVPacket *  pstPkt);
-int32_t         tsInput_ReadChannelVideoPkt(const int32_t inpuChannelNum, AVPacket *  pstPkt);
-int32_t         tsInput_WriteChannelAudioPkt(const int32_t inpuChannelNum, const int32_t audioChannelNum, AVPacket *  pstPkt);
-int32_t         tsInput_ReadChannelAudioPkt(const int32_t inpuChannelNum, const int32_t audioChannelNum, AVPacket *  pstPkt);
-int32_t         tsInput_GetChannelVideoPktNum(const int32_t inpuChannelNum);
-int32_t         tsInput_GetChannelAudioPktNum(const int32_t inpuChannelNum, const int32_t audioChannelNum);
+S32             tsInput_Init(void);
+S32             tsInput_StartChannel(const S32 inpuChannelNum, const S8 * url);
+S32             tsInput_StopChannel(const S32 inpuChannelNum);
+S32             tsInput_WriteChannelVideoPkt(const S32 inpuChannelNum, AVPacket *  pstPkt);
+S32             tsInput_ReadChannelVideoPkt(const S32 inpuChannelNum, const S32 programIndex, AVPacket ** pstPkt);
+S32             tsInput_WriteChannelAudioPkt(const S32 inpuChannelNum, AVPacket *  pstPkt);
+S32             tsInput_ReadChannelAudioPkt(const S32 inpuChannelNum, const S32 programIndex, const S32 audioIndex, AVPacket **  pstPkt);
+S32             tsInput_GetChannelVideoPktNum(const S32 inpuChannelNum, const S32 programIndex );
+S32             tsInput_GetChannelAudioPktNum(const S32 inpuChannelNum, const S32 programIndex, const S32 audioIndex);
+S32             tsInput_Test(void);
 
 #endif
 

@@ -23,11 +23,15 @@ int main(int argc, char ** argv)
     /* Init ts input */
 	assert(0 == tsInput_Init());
 
+    tsInput_Test();
     
-    tsInput_StartChannel(0,  (int8_t *)"test.ts");
-    tsInput_StopChannel(0);
-    tsInput_StartChannel(0,  (int8_t *)"test1.ts");
-	tsInput_StopChannel(1);	
+    while(1)
+    {
+        printf("In main fun ... !\n");
+        sleep(1);
+    }
+    
+
 	return 0;
 }
 

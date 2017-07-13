@@ -87,6 +87,7 @@ void Log_Clear(S8 *ps8LogSavePath, U32 u32LogSize);
 
 #define LOG_PRINTF(emLogLevel, emLogModule, format, ...) Log_Printf(emLogLevel, emLogModule, "[%s:%d] " format "\r\n", __func__, __LINE__,##__VA_ARGS__)
 
+#define DEBUG_MARK  { printf("%s %d\n", __func__, __LINE__);  fflush(stdout);}
 #endif
 
 
