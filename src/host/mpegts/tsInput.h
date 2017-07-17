@@ -18,10 +18,10 @@
 #include "libavfilter/buffersink.h"
 #include "libavfilter/buffersrc.h"
 
-#define INPUT_TS_MAX_PROGRAM_NUM        2
+#define INPUT_TS_MAX_PROGRAM_NUM        2       // program number per ts
 #define INPUT_TS_MAX_FRAME_BUFFER_NUM   60
-#define MAX_STREAM_NUM                  30      
-#define MAX_PROGTRAM_NAME_LEN           50  
+#define MAX_STREAM_NUM                  30      // max stream number per ts
+#define MAX_PROGTRAM_NAME_LEN           50      
 
 #define MAX_AUDIO_NUM_PER_PROGRAM        4
 #define MAX_SUPPORT_STREAM_PER_PROGRAM   (MAX_AUDIO_NUM_PER_PROGRAM + 1)   // 每个节目能支持的流数量
@@ -77,8 +77,8 @@ typedef struct {
 
     U32                                 u32VideoInputIndex;
     U32                                 u32VideoBufferIndex;
-    U32                                 u32AudioInputIndex[MAX_AUDIO_NUM_PER_PROGRAM];
-    U32                                 u32AudioBufferIndex[MAX_AUDIO_NUM_PER_PROGRAM];
+    U32                                 u32AudioInputIndex[MAX_AUDIO_NUM_PER_PROGRAM];  // stream index of ffmpeg ifctx
+    U32                                 u32AudioBufferIndex[MAX_AUDIO_NUM_PER_PROGRAM]; // stream index of program
     
     INPUT_STREAM_FRAME_LIST_S           stStreams[MAX_SUPPORT_STREAM_PER_PROGRAM];       
 } __aligned(4) INPUT_TS_PROGRAM_LIST_S;
@@ -131,6 +131,10 @@ S32             tsInput_WriteChannelAudioPkt(const S32 inpuChannelNum, AVPacket 
 S32             tsInput_ReadChannelAudioPkt(const S32 inpuChannelNum, const S32 programIndex, const S32 audioIndex, AVPacket **  pstPkt);
 S32             tsInput_GetChannelVideoPktNum(const S32 inpuChannelNum, const S32 programIndex );
 S32             tsInput_GetChannelAudioPktNum(const S32 inpuChannelNum, const S32 programIndex, const S32 audioIndex);
+bool            tsInput_VideoBufferIsFull(const S32 inpuChannelNum, const S32 programIndex);
+bool            tsInput_AudioBufferIsFull(const S32 inpuChannelNum, const S32 programIndex, const S32 audioIndex);
+S32             tsInput_WaitChannelStart(const S32 inpuChannelNum, const S32 timeOut);
+
 S32             tsInput_Test(void);
 
 #endif
