@@ -19,7 +19,7 @@
 #include "libavfilter/buffersrc.h"
 
 #define INPUT_TS_MAX_PROGRAM_NUM        2       // program number per ts
-#define INPUT_TS_MAX_FRAME_BUFFER_NUM   60
+#define INPUT_TS_MAX_FRAME_BUFFER_NUM   30
 #define MAX_STREAM_NUM                  30      // max stream number per ts
 #define MAX_PROGTRAM_NAME_LEN           50      
 
@@ -133,6 +133,7 @@ S32             tsInput_GetChannelVideoPktNum(const S32 inpuChannelNum, const S3
 S32             tsInput_GetChannelAudioPktNum(const S32 inpuChannelNum, const S32 programIndex, const S32 audioIndex);
 bool            tsInput_VideoBufferIsFull(const S32 inpuChannelNum, const S32 programIndex);
 bool            tsInput_AudioBufferIsFull(const S32 inpuChannelNum, const S32 programIndex, const S32 audioIndex);
+bool            tsInput_InputBufferIsFull(const S32 inpuChannelNum, const S32 programIndex);
 S32             tsInput_WaitChannelStart(const S32 inpuChannelNum, const S32 timeOut);
 
 S32             tsInput_Test(void);

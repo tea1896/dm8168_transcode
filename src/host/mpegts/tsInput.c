@@ -85,41 +85,6 @@ inline S32 tsInput_NotifyChannelEvent(const S32 inpuChannelNum)
     return 0;
 }
 
-inline S32 tsInput_NotifyChannelEventEmtpy(const S32 inpuChannelNum)
-{
-    S32 i = 0;
-    S32 j = 0;
-    S32 count = 0;
-    bool isEmpty = true;
-    TSIP_INPUT_CHANNEL_S * pstChannelInfo = NULL;
-    pstChannelInfo = tsInput_GetChannelHandler(inpuChannelNum);
-
-    assert( inpuChannelNum < MAX_SUPPORT_TRANS_NUM );
-
-    do
-    {
-        isEmpty = true;
-    
-        for( i=0; i<pstChannelInfo->programNum; i++)
-        {
-            for( j=0; j<pstChannelInfo->programInfo[i].u32StreamNum; j++)  
-            {
-                if(pstChannelInfo->programInfo[i].stStreams[j].numFrames > 0)
-                {
-                    isEmpty = false;
-                    //LOG_PRINTF(LOG_LEVEL_ERROR, LOG_MODULE_TSIN, "channel (%d) program (%d) stream (%d) frame(%d)!", inpuChannelNum, i, j, pstChannelInfo->programInfo[i].stStreams[j].numFrames);
-                    Event_Write(pstChannelInfo->programInfo[i].stStreams[j].inputEventFd);
-                }
-            }
-        }
-
-        usleep(10000);
-        count++;
-    }while( (false == isEmpty ) && (count < INPUT_TS_MAX_FRAME_BUFFER_NUM));
-    
-    return 0;
-}
-
 
 inline S32 tsInput_NotifyChannelFlushEvent(const S32 inpuChannelNum)
 {
@@ -134,7 +99,7 @@ inline S32 tsInput_NotifyChannelFlushEvent(const S32 inpuChannelNum)
     {
         for( j=0; j<pstChannelInfo->programInfo[i].u32StreamNum; j++)  
         {
-            if(pstChannelInfo->programInfo[i].stStreams[j].numFrames > 0)
+            //if(pstChannelInfo->programInfo[i].stStreams[j].numFrames > 0)
             {
                 Event_Write(pstChannelInfo->programInfo[i].stStreams[j].inputEventFd);
             }
@@ -168,6 +133,13 @@ void * tsInput_ReadPktTask(void * arg)
 
     /* vars */
     inpuChannelNum = pstChannelInfo->channelId;
+
+    /* priority */
+    #if 0
+    struct sched_param param = {0};
+    param.sched_priority = 99;
+    pthread_setschedparam( pthread_self(), SCHED_FIFO, &param );
+    #endif
 
     /* local file */
     if( 0x1 == pstChannelInfo->localSave )
@@ -281,11 +253,12 @@ void * tsInput_ReadPktTask(void * arg)
 
     /* read AV data */
     while(0x1 == pstChannelInfo->inputReadFlag)
-    {
+    {        
         /* read input frame */
         //LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TSIN, "Read channel (%d)!", pstChannelInfo->channelId);
         pkt = av_packet_alloc();
         av_init_packet(pkt);
+        
         s32Ret =  av_read_frame(pFormatCtx, pkt);
         if( s32Ret >= 0 )
         {
@@ -366,6 +339,12 @@ S32 tsInput_StartChannel(const S32 inpuChannelNum, const int8_t * url)
     
     /* creat task to read AV data */   
     THREAD_NEW_DETACH(tsInput_ReadPktTask, pstChannelInfo,"Read task");
+
+    /* wait start */
+    if( 0 != tsInput_WaitChannelStart(inpuChannelNum, 1000))
+    {
+        LOG_PRINTF(LOG_LEVEL_ERROR, LOG_MODULE_TSIN, "wait channel  (%d) start timeout !", inpuChannelNum);       
+    }
    
     return 0;
 }
@@ -425,7 +404,7 @@ S32 tsInput_StopChannel(const S32 inpuChannelNum)
     while( (0x0 == pstChannelInfo->exitFlag) &&  (s32Timeout > 0))
     {
         LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TSIN, "Wating channel (%d) url (%s) exit ...!", inpuChannelNum, pstChannelInfo->inputURL);
-        usleep(50000);
+        usleep(100000);
         s32Timeout--;
     }
     if(s32Timeout <= 0)
@@ -520,14 +499,14 @@ inline S32 tsInput_WriteChannelVideoPkt(const S32 inpuChannelNum, AVPacket *  ps
             if( currentFrameNum > 0 )
             {
                 Event_Write(pstChannelInfo->programInfo[programIndex].stStreams[videoIndex].inputEventFd);
-                usleep(5000);
+                usleep(1000);
                 timeout--;
             }        
         }while( ( currentFrameNum > 0 ) && (timeout > 0) );    
 
         if((timeout <= 0) && ( true == tsInput_VideoBufferIsFull( inpuChannelNum, programIndex)))
         {
-            LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TSIN, "### channel (%d) program (%d) video (%d) is full: (%d)!", inpuChannelNum, programIndex, videoIndex, currentFrameNum); 
+            LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TSIN, "### ch (%d) pro (%d) v (%d) full: (%d)!", inpuChannelNum, programIndex, videoIndex, currentFrameNum); 
             s32Ret =  -4;
             goto except_exit;
         }
@@ -598,6 +577,7 @@ inline S32 tsInput_ReadChannelVideoPkt(const S32 inpuChannelNum, const S32 progr
     videoIndex = pstChannelInfo->programInfo[programIndex].u32VideoBufferIndex;
 
     /* wait data */
+    LOG_PRINTF(LOG_LEVEL_ERROR, LOG_MODULE_TSIN, "Wait video event (%d)!", pstChannelInfo->programInfo[programIndex].stStreams[videoIndex].inputEventFd);
     s32Ret = Event_Read(pstChannelInfo->programInfo[programIndex].stStreams[videoIndex].inputEventFd);
     if( EVENT_SUCCESS != s32Ret)
     {
@@ -657,7 +637,7 @@ inline S32 tsInput_WriteChannelAudioPkt(const S32 inpuChannelNum, AVPacket * pst
     S32 audioIndex = 0;
     S32 audioBufferIndex = 0;
     S32 currentFrameNum = 0;
-    S32 timeout = INPUT_TS_MAX_FRAME_BUFFER_NUM;
+    S32 timeout = INPUT_TS_MAX_FRAME_BUFFER_NUM * 200;
     TSIP_INPUT_CHANNEL_S * pstChannelInfo = NULL;
 
     /* verify input parameters */
@@ -920,7 +900,7 @@ inline bool tsInput_VideoBufferIsFull(const S32 inpuChannelNum, const S32 progra
     S32 s32CurrentFrameNum = 0;
 
     s32CurrentFrameNum = tsInput_GetChannelVideoPktNum(inpuChannelNum, programIndex);
-    if( s32CurrentFrameNum ==  INPUT_TS_MAX_FRAME_BUFFER_NUM )
+    if( s32CurrentFrameNum >=  INPUT_TS_MAX_FRAME_BUFFER_NUM / 2)
     {
         isFull = true;    
         //LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TSIN, "channel (%d) program (%d) video (%d) is full!", inpuChannelNum, programIndex, s32CurrentFrameNum);
@@ -941,7 +921,7 @@ inline bool tsInput_AudioBufferIsFull(const S32 inpuChannelNum, const S32 progra
     S32 s32CurrentFrameNum = 0;
 
     s32CurrentFrameNum = tsInput_GetChannelAudioPktNum(inpuChannelNum, programIndex, audioIndex);
-    if( INPUT_TS_MAX_FRAME_BUFFER_NUM == s32CurrentFrameNum)
+    if( s32CurrentFrameNum >=  INPUT_TS_MAX_FRAME_BUFFER_NUM / 2)
     {
         isFull = true;     
         //LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TSIN, "channel (%d) program (%d) audio (%d) (%d) is full!", inpuChannelNum, programIndex, audioIndex, s32CurrentFrameNum);
@@ -950,6 +930,19 @@ inline bool tsInput_AudioBufferIsFull(const S32 inpuChannelNum, const S32 progra
     {
         isFull = false;
         //LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TSIN, "channel (%d) program (%d) audio (%d) (%d) isn't full!", inpuChannelNum, programIndex, audioIndex, s32CurrentFrameNum);
+    }
+
+    return isFull;
+}
+
+inline bool tsInput_InputBufferIsFull(const S32 inpuChannelNum, const S32 programIndex)
+{
+    bool isFull = false;
+
+    if( (true == tsInput_VideoBufferIsFull(inpuChannelNum,programIndex))
+    ||  (true == tsInput_AudioBufferIsFull(inpuChannelNum,programIndex, 0)))
+    {
+        isFull =  true;
     }
 
     return isFull;
@@ -982,151 +975,108 @@ S32 tsInput_WaitChannelStart(const S32 inpuChannelNum, const S32 timeOut)
 /* for test  */
 typedef struct
 {
-    S32 videoExitFlag;
-    S32 videoRunState;
-
-    S32 audioExitFlag;
-    S32 audioRunState;
-    S32 channelIndex;
+    S32 revExitFlag;
+    S32 revRunState;
 }TSINPUT_REV;
 
-TSINPUT_REV g_stTSInput[MAX_SUPPORT_TRANS_NUM];
+TSINPUT_REV g_stTSInput;
 
 
-void * tsInput_RevAudioTest(void * arg)
+
+void * tsInput_RevFrame(void * arg)
 {
+    S32 channelIndex = 0; 
+    S32 programIndex = 0; 
+    S32 streamIndex = 0; 
+    S32 fd = -1;
+    S32 maxFd = 0;
     S32 s32Ret = 0;
-    S32 s32ChannelIndex = 0;
+    fd_set fds;
+    TSINPUT_REV * pstTaskHandler = NULL;
+    TSIP_INPUT_S * pstInputHandler = NULL;
+    struct timeval tiemout;
+    S32 s32Count = 0;
     AVPacket * pstPkt = NULL;
-    TSINPUT_REV * pstHandler = NULL;
-    S32 s32FrameCount = 0;
-
-    S8  AudioFileName[OS_MAX_FILE_NAME_LEN] = {0};
-    S32 audioFd = -1;
+    S32 s32Number = 1;
     
-    pstHandler = (TSINPUT_REV *)arg;
     
-    pstHandler->audioExitFlag = 0;
-    pstHandler->audioRunState =  1;
-    s32ChannelIndex = pstHandler->channelIndex;
+    pstTaskHandler = (TSINPUT_REV *)arg;
+    pstInputHandler =  tsInput_GetHandler();
+    
+    pstTaskHandler->revExitFlag = 0;
+    pstTaskHandler->revRunState = 1;
+    
+    while(0x0 == pstTaskHandler->revExitFlag)
+    {
+        FD_ZERO(&fds);
 
-    snprintf(AudioFileName, OS_MAX_FILE_NAME_LEN, "channel-%d-audio.aac", s32ChannelIndex);
-
-    audioFd = open(AudioFileName, O_RDWR | O_CREAT);
-    assert(audioFd > 0);
-
-    /* wait start */
-    s32Ret = tsInput_WaitChannelStart(s32ChannelIndex, 3000);
-
-    while(0 == pstHandler->audioExitFlag)
-    {    
-        s32Ret = tsInput_ReadChannelAudioPkt(s32ChannelIndex, 0, 0, &pstPkt);
-        if( s32Ret != 0)
+        for( channelIndex = 0; channelIndex<s32Number; channelIndex++ )
         {
-            LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TSIN, "channel (%d) program (%d) read audio failed (%d)!", s32ChannelIndex, 0, s32Ret);
+            for( programIndex = 0; programIndex<pstInputHandler->inputChannel[channelIndex].programNum; programIndex++ )
+            {
+                for( streamIndex = 0; streamIndex<pstInputHandler->inputChannel[channelIndex].programInfo[programIndex].u32StreamNum; streamIndex++ )
+                {
+                    fd = pstInputHandler->inputChannel[channelIndex].programInfo[programIndex].stStreams[streamIndex].inputEventFd;
+                    FD_SET(fd, &fds); 
+                    maxFd = fd > maxFd? fd+1 : maxFd;
+                }
+            }
+        }
+
+        tiemout.tv_sec = 2;
+        s32Ret = select(maxFd,  &fds,  NULL,  NULL,  &tiemout);
+        if( s32Ret > 0 )
+        {
+            //LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TSIN, "receive data successfuly!");
+            for( channelIndex = 0; channelIndex<s32Number; channelIndex++ )
+            {
+                for( programIndex = 0; programIndex<pstInputHandler->inputChannel[channelIndex].programNum; programIndex++ )
+                {
+                    /* video */
+                    streamIndex = pstInputHandler->inputChannel[channelIndex].programInfo[programIndex].u32VideoBufferIndex;
+                    fd = pstInputHandler->inputChannel[channelIndex].programInfo[programIndex].stStreams[streamIndex].inputEventFd;
+                    if(FD_ISSET(fd, &fds))
+                    {
+                        LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TSIN, "channel -%d video event fd %d!", channelIndex, fd); 
+                        tsInput_ReadChannelVideoPkt(channelIndex, programIndex, &pstPkt);
+                        //if(10 == channelIndex)
+                        {
+                            LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TSIN, "channel -%d read video!", channelIndex);    
+                        }
+                        
+                    }
+                       
+                    /* audio */
+                    streamIndex = pstInputHandler->inputChannel[channelIndex].programInfo[programIndex].u32AudioBufferIndex[0];
+                    fd = pstInputHandler->inputChannel[channelIndex].programInfo[programIndex].stStreams[streamIndex].inputEventFd;
+                    if(FD_ISSET(fd, &fds))
+                    {
+                        tsInput_ReadChannelAudioPkt(channelIndex, programIndex, 0, &pstPkt);
+
+                        //if(10 == channelIndex)
+                        {
+                            LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TSIN, "channel -%d read audio!", channelIndex);    
+                        }
+                    }
+                }
+            }
         }
         else
         {
-            s32Ret = write(audioFd, pstPkt->data, pstPkt->size);
-            if( s32Ret == pstPkt->size )
-            {
-                //fsync(audioFd);
-                s32FrameCount++;
-                if(0 == s32FrameCount % 200)
-                {
-                    LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TSIN, "channel (%d) program (%d) read audio size (%d)!", s32ChannelIndex, 0, pstPkt->size);   
-                }
-            }
-            else
-            {
-                LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TSIN, "channel (%d) program (%d) read audio audio (%d) write (%d)!", s32ChannelIndex, 0, pstPkt->size, s32Ret);    
-            }  
-
-            av_packet_free(&pstPkt);      
-        }
-          
+            LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TSIN, "receive data error!");
+        }  
+        
     }
-
-    if( audioFd > 0 )
-    {
-        fsync(audioFd);
-        close(audioFd);
-    }
-
-    LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TSIN, "channel (%d) program (%d) audio read task exit!", s32ChannelIndex, 0);
-
-    pstHandler->audioRunState = 0;
-}
-
-
-
-void * tsInput_RevVideoTest(void * arg)
-{
-    S32 s32Ret = 0;
-    S32 s32ChannelIndex = 0;
-    AVPacket * pstPkt = NULL;
-    TSINPUT_REV * pstHandler = NULL;
-    S32 s32FrameCount = 0;
-
-    S8 videoFileName[OS_MAX_FILE_NAME_LEN] = {0};
-    S32 videoFd = -1;
     
-    pstHandler = (TSINPUT_REV *)arg;
+
+    pstTaskHandler->revExitFlag = 1;
+    pstTaskHandler->revRunState = 0;
     
-    pstHandler->videoExitFlag = 0;
-    pstHandler->videoRunState =  1;
-    s32ChannelIndex = pstHandler->channelIndex;
-
-    snprintf(videoFileName, OS_MAX_FILE_NAME_LEN, "channel-%d-video.h264", s32ChannelIndex);
-
-    videoFd = open(videoFileName, O_RDWR | O_CREAT);
-
-    /* wait start */
-    s32Ret = tsInput_WaitChannelStart(s32ChannelIndex, 3000);
-
-    while(0 == pstHandler->videoExitFlag)
-    {
-        s32Ret = tsInput_ReadChannelVideoPkt(s32ChannelIndex, 0, &pstPkt);
-        if( s32Ret != 0)
-        {
-            LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TSIN, "channel (%d) program (%d) read video failed (%d)!", s32ChannelIndex, 0, s32Ret);
-        }
-        else
-        {
-            s32Ret = write(videoFd, pstPkt->data, pstPkt->size);
-            if( s32Ret == pstPkt->size )
-            {
-                //fsync(videoFd);
-                s32FrameCount++;
-                if(0 == s32FrameCount % 200)
-                {
-                    LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TSIN, "channel (%d) program (%d) read video size (%d)!", s32ChannelIndex, 0, pstPkt->size);   
-                }
-            }
-            else
-            {
-                LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TSIN, "channel (%d) program (%d) read video size (%d) write (%d)!", s32ChannelIndex, 0, pstPkt->size, s32Ret);    
-            }  
-
-            av_packet_free(&pstPkt);      
-        }
-          
-    }
-
-    if( videoFd > 0 )
-    {
-        fsync(videoFd);
-        close(videoFd);
-    }
-
-    LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TSIN, "channel (%d) program (%d) read task exit!", s32ChannelIndex, 0);
-
-    pstHandler->videoRunState = 0;
 }
 
 S32 tsInput_Test(void)
 {  
-    S32 channelNum = 12;
+    S32 channelNum = 1;
     S32 channelIndex = 0; 
     S32 s32Count = 0;
     S32 s32Ret  = 0;
@@ -1140,9 +1090,7 @@ S32 tsInput_Test(void)
     /* start rev */
     for( channelIndex = 0; channelIndex<channelNum; channelIndex++ )
     {
-        g_stTSInput[channelIndex].channelIndex = channelIndex;
-        THREAD_NEW_DETACH(tsInput_RevVideoTest, &(g_stTSInput[channelIndex]),"Read video task");
-        THREAD_NEW_DETACH(tsInput_RevAudioTest, &(g_stTSInput[channelIndex]),"Read audio task");
+        THREAD_NEW_DETACH(tsInput_RevFrame, &(g_stTSInput),"Read  task");
     }
 
     /* main loop */
@@ -1154,23 +1102,11 @@ S32 tsInput_Test(void)
     LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TSIN, "main loop exit!", channelIndex);
 
     /* stop  rev */
-    for( channelIndex = 0; channelIndex < channelNum; channelIndex++ )
+    g_stTSInput.revExitFlag = 1;
+    while( 0x1 == g_stTSInput.revRunState )
     {
-        g_stTSInput[channelIndex].videoExitFlag = 1;
-        g_stTSInput[channelIndex].audioExitFlag = 1;
-
-        tsInput_NotifyChannelFlushEvent(channelIndex);
-    }
-
-    /* wait */
-    for( channelIndex = 0; channelIndex < channelNum; channelIndex++ )
-    {
-        do 
-        {
-            usleep(50000);
-        }while((0x1 == g_stTSInput[channelIndex].videoRunState) || (0x1 == g_stTSInput[channelIndex].audioRunState));
-
-        LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TSIN, "channel (%d) rev exit!", channelIndex);
+        sleep(1);
+        LOG_PRINTF(LOG_LEVEL_DEBUG, LOG_MODULE_TSIN, "wait rev exit!", channelIndex);
     }
 
     /* stop channel */

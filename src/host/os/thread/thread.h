@@ -12,4 +12,10 @@ pthread_t  Thread_NewDetach(ThreadFunc func, void *thr_data, const char *funcnam
 #define THREAD_NEW_DETACH(func, thr_data, funcname) Thread_NewDetach(func, thr_data, funcname, __FILE__, __LINE__)
 
 
+int get_thread_policy(pthread_attr_t *attr);
+void show_thread_priority(pthread_attr_t *attr,int policy);
+int get_thread_priority(pthread_attr_t *attr);
+void set_thread_policy(pthread_attr_t *attr,int policy);
 #endif
+
+

@@ -45,3 +45,56 @@ end:
 	}
 
 }
+
+
+int get_thread_policy(pthread_attr_t *attr)
+{
+    int policy;
+    int rs = pthread_attr_getschedpolicy(attr,&policy);
+    assert(rs==0);
+    switch(policy)
+    {
+        case SCHED_FIFO:
+            LOG_PRINTF(LOG_LEVEL_INFO, LOG_MODULE_SYS,"policy= SCHED_FIFO\n");
+            break;
+        case SCHED_RR:
+            LOG_PRINTF(LOG_LEVEL_INFO, LOG_MODULE_SYS,"policy= SCHED_RR");
+            break;
+        case SCHED_OTHER:
+            LOG_PRINTF(LOG_LEVEL_INFO, LOG_MODULE_SYS,"policy=SCHED_OTHER\n");
+            break;
+        default:
+            LOG_PRINTF(LOG_LEVEL_INFO, LOG_MODULE_SYS,"policy=UNKNOWN\n");
+            break;
+    }
+    return policy;
+}
+
+void show_thread_priority(pthread_attr_t *attr,int policy)
+{
+  int priority = sched_get_priority_max(policy);
+  assert(priority!=-1);
+  LOG_PRINTF(LOG_LEVEL_INFO, LOG_MODULE_SYS,"max_priority=%d\n",priority);
+  priority= sched_get_priority_min(policy);
+  assert(priority!=-1);
+  LOG_PRINTF(LOG_LEVEL_INFO, LOG_MODULE_SYS,"min_priority=%d\n",priority);
+}
+
+int get_thread_priority(pthread_attr_t *attr)
+{
+  struct sched_param param;
+  int rs = pthread_attr_getschedparam(attr,&param);
+  assert(rs==0);
+  LOG_PRINTF(LOG_LEVEL_INFO, LOG_MODULE_SYS,"priority=%d",param.__sched_priority);
+  return param.__sched_priority;
+}
+
+void set_thread_policy(pthread_attr_t *attr,int policy)
+{
+  int rs = pthread_attr_setschedpolicy(attr,policy);
+  assert(rs==0);
+  get_thread_policy(attr);
+}
+
+
+
